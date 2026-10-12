@@ -1,0 +1,28 @@
+{
+ "on": true,
+ "tickers": [
+  "AAPL",
+  "NVDA",
+  "TSLA",
+  "AMD",
+  "MSFT",
+  "META",
+  "AMZN"
+ ],
+ "start_cash": 10000,
+ "risk_pct": 1.0,
+ "rr": 2.0,
+ "max_trades": 3,
+ "daily_loss_pct": 3.0,
+ "max_pos_pct": 100,
+ "fee_nok": 5,
+ "pullback": true,
+ "failure": true,
+ "orb": true,
+ "need_confirm": true,
+ "breakeven": false,
+ "skip_open_min": 15,
+ "stop_new_min": 45,
+ "flat_min": 10,
+ "ntfy": ""
+}
