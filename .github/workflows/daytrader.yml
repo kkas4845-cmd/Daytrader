@@ -1,0 +1,51 @@
+name: Daytrader
+
+on:
+  schedule:
+    # Hver time 13:07–21:07 UTC (15:07–23:07 norsk sommertid), mandag–fredag.
+    # Hver økt varer opptil 70 minutter, så den neste tar over der den forrige slapp.
+    - cron: "7 13-21 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "Hva skal kjøres?"
+        type: choice
+        options: [bot, backtest]
+        default: bot
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daytrader
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Hent data-grenen
+        run: |
+          git config --global user.name "daytrader-bot"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin data >/dev/null; then
+            git fetch -q origin data
+            git worktree add -q -B data data origin/data
+          else
+            git worktree add -q --orphan -b data data
+            cp defaults/config.json data/config.json
+            echo '{"commands": []}' > data/commands.json
+            git -C data add config.json commands.json
+            git -C data commit -q -m "start"
+            git -C data push -q origin data
+          fi
+
+      - name: Kjør boten
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python3 run.py ${{ github.event.inputs.task == 'backtest' && '--backtest' || '' }}

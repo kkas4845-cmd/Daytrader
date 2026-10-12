@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="nb"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Daytrader</title><style>
+:root{--bg:#f4f4f3;--card:#fff;--ink:#141414;--muted:#6b6b6b;--line:#dcdcda;--soft:#ececea;--buy:#1c7c45;--sell:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#121212;--card:#1c1c1c;--ink:#f1f1f1;--muted:#9a9a9a;--line:#333;--soft:#262626;--buy:#5fce8d;--sell:#ff8a80}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:#111;color:#fff;padding:14px 20px;font-weight:700;font-size:18px}header small{font-weight:400;color:#bbb;margin-left:10px;font-size:13px}
+main{max-width:1050px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:16px}
+.card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+h2{font-size:16px;margin:0 0 10px}.hint,small{color:var(--muted);font-size:13px}.mt{margin-top:12px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:16px}.cards .card{margin:0}
+.stat .label{color:var(--muted);font-size:13px;font-weight:600}.stat .value{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}.stat .sub{font-size:13px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.up{color:var(--buy)!important}.down{color:var(--sell)!important}
+.btn{font:inherit;font-weight:600;padding:9px 16px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--ink);color:var(--card);border-color:var(--ink)}.btn.no{border-color:var(--sell);color:var(--sell)}.btn:disabled{opacity:.5}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--soft);vertical-align:top}th{font-size:12px;color:var(--muted)}.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.list{list-style:none;margin:0;padding:0}.list li{padding:8px 0;border-bottom:1px solid var(--soft)}.list li:last-child{border:0}
+#d-log{max-height:360px;overflow-y:auto}
+.row{display:flex;gap:14px;flex-wrap:wrap}.field{margin-bottom:14px;flex:1;min-width:170px}.field label{display:block;font-size:13px;font-weight:600;margin-bottom:4px}.field small{display:block;margin-top:4px}
+input[type=text],input[type=number]{width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;background:var(--soft);color:var(--ink);font:inherit}
+.checks label{display:flex;gap:8px;align-items:center;font-weight:500;margin-bottom:8px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{background:var(--soft);border-radius:8px;padding:6px 10px;font-size:14px;font-variant-numeric:tabular-nums}
+.alert{border-left:3px solid var(--sell);background:var(--soft);padding:10px 12px;border-radius:6px;margin:8px 0}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--card);padding:10px 18px;border-radius:999px;font-size:14px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}.cards{grid-template-columns:1fr 1fr}main{padding:12px}}
+
+.badge{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--soft);margin-left:6px}
+.badge.live{background:var(--buy);color:#fff}
+.btn.small{padding:4px 10px;font-size:13px}
+#connect input{margin-bottom:8px}
+.ro .needs-token{opacity:.55}
+</style></head><body>
+<header>Daytrader <small>testkonto · late-penger · <a id="repo" href="#" style="color:#bbb">repo</a></small></header>
+<main>
+<div id="offline" class="alert" hidden></div>
+
+<div id="offline" class="alert" hidden>Får ikke kontakt med boten. Er det svarte vinduet fortsatt åpent?</div>
+    <div class="card">
+      <div class="card-head"><h2>Status <span id="d-live" class="badge">–</span></h2>
+        <div class="actions"><button type="button" class="btn needs-token" id="d-sellall">Selg alt</button><button type="button" class="btn primary needs-token" id="d-toggle">–</button></div></div>
+      <p id="d-status">–</p>
+      <div id="d-data" class="alert" hidden></div>
+      <p class="hint">Kjører på GitHub, også når PC-en er av. Testkonto med late-penger. Sjekker kursene hvert minutt mens amerikanske børser er åpne (15:30–22:00 norsk tid). Siden oppdateres ca. hvert 5. minutt.</p>
+      <p class="hint" id="d-pending"></p>
+    </div>
+    <div class="cards">
+      <div class="card stat"><div class="label">Testkonto</div><div class="value" id="d-equity">–</div><div class="sub" id="d-cash"></div></div>
+      <div class="card stat"><div class="label">I dag</div><div class="value" id="d-day">–</div><div class="sub" id="d-dayn"></div></div>
+      <div class="card stat"><div class="label">Treffprosent</div><div class="value" id="d-win">–</div><div class="sub" id="d-wins"></div></div>
+      <div class="card stat"><div class="label">Snitt per handel</div><div class="value" id="d-r">–</div><div class="sub">R = ganger risikoen. Over 0 er pluss.</div></div>
+    </div>
+    <div class="card"><h2>Aksjer boten følger</h2><div id="d-watch" class="chips"></div><p class="hint" id="d-last"></p></div>
+    <div class="card"><h2>Åpne posisjoner</h2>
+      <div class="table-wrap"><table id="d-pos"><thead><tr><th>Aksje</th><th>Oppsett</th><th class="n">Antall</th><th class="n">Kjøpt</th><th class="n">Nå</th><th class="n">Stop</th><th class="n">Mål</th><th class="n">+/−</th><th></th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h2>Hva boten gjør</h2><ul id="d-log" class="list"></ul></div>
+      <div class="card"><h2>Test reglene på de siste ukene</h2>
+        <p class="hint">Spiller av de siste ca. 30 dagene med 5-minutters kurser og viser hva reglene ville gitt. Gjør dette før du stoler på boten.</p>
+        <button type="button" class="btn needs-token" id="d-bt">Kjør test</button>
+        <div id="d-bt-out" class="mt"></div>
+      </div>
+    </div>
+    <div class="card"><h2>Fullførte handler</h2>
+      <div class="table-wrap"><table id="d-trades"><thead><tr><th>Solgt</th><th>Aksje</th><th>Oppsett</th><th class="n">Antall</th><th class="n">Inn</th><th class="n">Ut</th><th class="n">Resultat</th><th class="n">R</th><th>Hvorfor ut</th><th>Hvorfor inn</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <div class="card" id="connect">
+      <h2>Styr boten herfra</h2>
+      <div id="c-off">
+        <p class="hint">Alle kan se siden. For å endre innstillinger og trykke på knappene må du koble til med en nøkkel fra GitHub. Nøkkelen lagres bare i denne nettleseren.</p>
+        <ol class="hint"><li>Åpne <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a>.</li>
+        <li>Gi den et navn, velg <b>Only select repositories</b> og velg dette repoet.</li>
+        <li>Under <b>Repository permissions</b>: sett <b>Contents</b> og <b>Actions</b> til <b>Read and write</b>.</li>
+        <li>Trykk <b>Generate token</b>, kopier nøkkelen og lim den inn her.</li></ol>
+        <input type="password" id="c-token" placeholder="github_pat_..." autocomplete="off">
+        <button type="button" class="btn primary" id="c-save">Koble til</button>
+      </div>
+      <div id="c-on" hidden><p class="hint">Koblet til. Knappene og innstillingene virker.</p>
+        <div class="actions"><button type="button" class="btn" id="c-start">Start boten nå</button><button type="button" class="btn" id="c-forget">Koble fra</button></div></div>
+    </div>
+    <form id="d-form" class="card">
+      <h2>Innstillinger</h2>
+      <div class="field"><label>Aksjer boten følger</label><input type="text" name="tickers" autocomplete="off"><small>Skilt med komma, slik de heter hos Yahoo Finance. Amerikanske skrives rett fram (AAPL). Oslo-aksjer slutter på .OL (EQNR.OL), men gratiskursene for Oslo er 15 minutter forsinket.</small></div>
+      <div class="row">
+        <div class="field"><label>Startbeløp testkonto (kr)</label><input type="number" name="start_cash" min="1000" step="1000"><small>Brukes når du starter kontoen på nytt.</small></div>
+        <div class="field"><label>Risiko per handel (%)</label><input type="number" name="risk_pct" min="0.1" max="5" step="0.1"><small>1 %-regelen: så mye av kontoen kan tapes på én handel.</small></div>
+        <div class="field"><label>Mål (× risiko)</label><input type="number" name="rr" min="1" max="5" step="0.5"><small>2 = gevinstmålet er dobbelt så langt unna som stop-loss.</small></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Maks handler per dag</label><input type="number" name="max_trades" min="1" max="20"></div>
+        <div class="field"><label>Stopp for dagen ved tap (%)</label><input type="number" name="daily_loss_pct" min="0.5" max="20" step="0.5"></div>
+        <div class="field"><label>Maks i én aksje (% av konto)</label><input type="number" name="max_pos_pct" min="5" max="100"></div>
+        <div class="field"><label>Kurtasje per handel (kr)</label><input type="number" name="fee_nok" min="0" max="500"></div>
+      </div>
+      <div class="field checks">
+        <label><input type="checkbox" name="pullback"> Strategi 1: Pullback (tilbakefall til støtte i opptrend)</label>
+        <label><input type="checkbox" name="failure"> Strategi 2: Feiltest (falskt brudd under støtte)</label>
+        <label><input type="checkbox" name="orb"> Strategi 3: Åpningsbrudd (brudd over toppen fra de første 30 minuttene)</label>
+        <label><input type="checkbox" name="breakeven"> Flytt stop opp til kjøpskursen når kursen har steget like mye som risikoen (sikrer mot tap)</label>
+        <label><input type="checkbox" name="need_confirm"> Krev bekreftelse (høyt volum eller RSI-divergens)</label>
+      </div>
+      <div class="field"><label>Varsel på telefonen (valgfritt)</label><input type="text" name="ntfy" autocomplete="off" placeholder="ntfy-emne, f.eks. kasper-daytrader-83kd"><small>Installer appen ntfy på telefonen og abonner på samme emne. La stå tomt for ingen varsler.</small></div>
+      <div class="actions"><button class="btn primary needs-token" type="submit">Lagre</button>
+        <button class="btn no needs-token" type="button" id="d-reset">Start testkontoen på nytt</button></div>
+    </form>
+  
+
+</main>
+<div id="toast" hidden></div>
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+function esc(v) { return String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+const nf0 = new Intl.NumberFormat("nb-NO", { maximumFractionDigits: 0 });
+const kr = v => (v == null || isNaN(v)) ? "–" : nf0.format(v) + " kr";
+const pct = v => Math.round(Number(v || 0) * 100) + " %";
+const px = v => v == null ? "–" : Number(v).toFixed(2);
+const krs = v => `<span class="${v > 0 ? "up" : v < 0 ? "down" : ""}">${v > 0 ? "+" : ""}${nf0.format(v)} kr</span>`;
+function when(iso, withDate) { const d = new Date(iso); if (isNaN(d)) return ""; const t = d.toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" }); return withDate ? d.toLocaleDateString("nb-NO", { day: "numeric", month: "short" }) + " " + t : t; }
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 4500); }
+
+// ---------- which repo ----------
+const qs = new URLSearchParams(location.search).get("repo");
+const REPO = qs || (location.hostname.endsWith(".github.io")
+  ? location.hostname.split(".")[0] + "/" + location.pathname.split("/").filter(Boolean)[0]
+  : "__REPO__");
+const API = "https://api.github.com/repos/" + REPO;
+let token = "";
+try { token = localStorage.getItem("dt-token") || ""; } catch (e) {}
+
+async function gh(path, opt = {}) {
+  const headers = Object.assign({ "Accept": "application/vnd.github+json" }, opt.headers || {});
+  if (token) headers.Authorization = "Bearer " + token;
+  const r = await fetch(API + path, Object.assign({}, opt, { headers }));
+  if (r.status === 401) throw new Error("Nøkkelen virker ikke (utløpt eller feil). Koble til på nytt.");
+  if (r.status === 403 || r.status === 404) throw new Error(`GitHub sa nei (${r.status}). Har nøkkelen tilgang til ${REPO} med Contents og Actions = Read and write?`);
+  if (!r.ok && r.status !== 204) throw new Error("GitHub-feil " + r.status);
+  return r;
+}
+const b64 = s => btoa(unescape(encodeURIComponent(s)));
+const unb64 = s => decodeURIComponent(escape(atob(s.replace(/\n/g, ""))));
+async function readFile(name) {
+  if (token) {
+    const r = await gh(`/contents/${name}?ref=data&t=${Date.now()}`, { cache: "no-store" });
+    const j = await r.json();
+    return { data: JSON.parse(unb64(j.content)), sha: j.sha };
+  }
+  const r = await fetch(`https://raw.githubusercontent.com/${REPO}/data/${name}?t=${Math.floor(Date.now() / 60000)}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(r.status === 404 ? "Boten har ikke kjørt ennå." : "Fikk ikke hentet data (" + r.status + ")");
+  return { data: await r.json() };
+}
+async function writeFile(name, change, msg) {
+  for (let i = 0; i < 3; i++) {
+    const cur = await readFile(name).catch(() => ({ data: {}, sha: undefined }));
+    const data = change(cur.data || {});
+    const body = { message: msg, branch: "data", content: b64(JSON.stringify(data, null, 1)) };
+    if (cur.sha) body.sha = cur.sha;
+    const r = await fetch(API + "/contents/" + name, { method: "PUT", body: JSON.stringify(body),
+      headers: { Accept: "application/vnd.github+json", Authorization: "Bearer " + token } });
+    if (r.ok) return;
+    if (r.status !== 409 && r.status !== 422) throw new Error("Lagring feilet (" + r.status + ")");
+  }
+  throw new Error("Lagring feilet – prøv igjen.");
+}
+async function sendCommand(type, ticker) {
+  await writeFile("commands.json", d => {
+    const list = (d.commands || []).slice(-30);
+    list.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), type, ticker: ticker || "", t: new Date().toISOString() });
+    return { commands: list };
+  }, "kommando: " + type);
+}
+async function dispatch(task) {
+  await gh("/actions/workflows/daytrader.yml/dispatches", { method: "POST",
+    body: JSON.stringify({ ref: "main", inputs: { task } }), headers: { "Content-Type": "application/json" } });
+}
+const isLive = s => s && s.updated && Date.now() - new Date(s.updated) < 4 * 60000;
+
+// ---------- render ----------
+let S = null, formFilled = false;
+function render(d) {
+  S = d;
+  const c = d.cfg, st = d.stats || {};
+  const live = isLive(d);
+  $("#d-live").textContent = live ? "kjører nå" : "pause";
+  $("#d-live").classList.toggle("live", live);
+  $("#d-toggle").textContent = c.on ? "Slå av" : "Slå på";
+  $("#d-toggle").classList.toggle("primary", !c.on);
+  $("#d-status").textContent = (c.on ? d.status : (d.pos && Object.keys(d.pos).length ? d.status : "Boten er av. Slå den på for å handle.")) +
+    (live ? "" : ` Sist oppdatert ${when(d.updated, true)}. Boten starter igjen når børsen åpner.`);
+  const dm = $("#d-data"); dm.hidden = !d.data_msg; dm.textContent = d.data_msg || "";
+  $("#d-equity").textContent = kr(d.equity);
+  $("#d-cash").textContent = kr(d.cash) + " kontanter";
+  $("#d-day").innerHTML = krs(d.day.pnl || 0);
+  $("#d-dayn").textContent = `${d.day.n || 0} av ${c.max_trades} handler` + (d.halted ? " – " + d.halted : "");
+  $("#d-win").textContent = st.n ? pct(st.win_rate) : "–";
+  $("#d-wins").innerHTML = st.n ? `${st.n} handler, totalt ${krs(st.pnl)}` : "Ingen handler ennå";
+  $("#d-r").textContent = st.n ? (st.avg_r > 0 ? "+" : "") + st.avg_r.toFixed(2) + " R" : "–";
+  $("#d-watch").innerHTML = c.tickers.map(t => `<span class="chip">${esc(t)} <b>${d.prices && d.prices[t] != null ? px(d.prices[t]) : "–"}</b> <small>${esc((d.cur || {})[t] || "")}</small></span>`).join("");
+  $("#d-last").textContent = d.last_ok ? "Kurser sist hentet " + when(d.last_ok, true) + "." : "";
+  const pos = Object.entries(d.pos || {});
+  $("#d-pos tbody").innerHTML = pos.length ? pos.map(([t, p]) => {
+    const now = (d.prices || {})[t] ?? p.entry, pnl = p.qty * (now - p.entry) * p.fx;
+    return `<tr><td>${esc(t)}</td><td title="${esc(p.why)}">${esc(p.setup)}</td><td class="n">${p.qty}</td><td class="n">${px(p.entry)}</td><td class="n">${px(now)}</td><td class="n">${px(p.stop)}${p.stop >= p.entry ? " ✓" : ""}</td><td class="n">${px(p.target)}</td><td class="n">${krs(pnl)}</td><td><button class="btn small needs-token" data-sell="${esc(t)}">Selg</button></td></tr>`;
+  }).join("") : `<tr><td colspan="9" class="hint">Ingen åpne posisjoner.</td></tr>`;
+  $("#d-log").innerHTML = (d.log || []).slice().reverse().slice(0, 60).map(l => `<li><small>${when(l.t, true)}</small><br>${esc(l.msg)}</li>`).join("")
+    || `<li class="hint">Ingenting ennå. Boten skriver her når den ser et oppsett.</li>`;
+  $("#d-trades tbody").innerHTML = (d.trades || []).slice().reverse().slice(0, 100).map(t =>
+    `<tr><td>${when(t.out, true)}</td><td>${esc(t.ticker)}</td><td>${esc(t.setup)}</td><td class="n">${t.qty}</td><td class="n">${px(t.entry)}</td><td class="n">${px(t.exit)}</td><td class="n">${krs(t.pnl)}</td><td class="n">${t.r > 0 ? "+" : ""}${t.r}</td><td>${esc(t.exit_why)}</td><td>${esc(t.why || "")}</td></tr>`).join("")
+    || `<tr><td colspan="10" class="hint">Ingen handler ennå.</td></tr>`;
+  const b = d.backtest, out = $("#d-bt-out");
+  if (b && b.error) out.innerHTML = `<p class="hint">${esc(b.error)}</p>`;
+  else if (b) out.innerHTML = `<p><b>${esc(b.from)} – ${esc(b.to)}</b> (${b.days} børsdager)</p>
+    <ul class="list"><li>${kr(b.start)} → <b>${kr(b.end)}</b> (${krs(b.end - b.start)})</li>
+    <li>${b.n} handler, treff ${pct(b.win_rate)}, snitt ${(b.avg_r > 0 ? "+" : "") + b.avg_r.toFixed(2)} R</li>
+    <li>Kurtasje betalt: ${kr(b.fees)}</li>
+    ${Object.entries(b.by_setup).map(([k, v]) => `<li>${esc(k)}: ${v.n} handler, treff ${pct(v.win_rate)}, ${krs(v.pnl)}</li>`).join("")}</ul>
+    <p class="hint">Kjørt ${when(b.ran, true)}. Under ca. 30 handler sier testen lite.</p>`;
+  if (!formFilled) {
+    const f = $("#d-form");
+    for (const [k, v] of Object.entries(c)) {
+      const el = f.elements[k]; if (!el) continue;
+      if (el.type === "checkbox") el.checked = !!v; else el.value = Array.isArray(v) ? v.join(", ") : v;
+    }
+    formFilled = true;
+  }
+  document.body.classList.toggle("ro", !token);
+}
+async function load() {
+  try { render((await readFile("state.json")).data); $("#offline").hidden = true; }
+  catch (e) { $("#offline").hidden = false; $("#offline").textContent = e.message; }
+}
+
+// ---------- actions ----------
+function pending(msg) {
+  $("#d-pending").textContent = msg + (isLive(S) ? " Boten utfører det innen ca. 1–2 minutter." : " Boten utfører det neste gang den kjører (når børsen åpner).");
+}
+async function act(fn, msg) {
+  if (!token) { toast("Koble til nederst på siden først."); $("#connect").scrollIntoView({ behavior: "smooth" }); return; }
+  try { await fn(); pending(msg); toast("Sendt."); } catch (e) { toast(e.message); }
+}
+$("#d-toggle").addEventListener("click", () => {
+  const on = !S.cfg.on;
+  act(async () => {
+    await writeFile("config.json", d => Object.assign({}, S.cfg, d, { on }), on ? "slå på" : "slå av");
+    S.cfg.on = on; $("#d-toggle").textContent = on ? "Slå av" : "Slå på"; $("#d-toggle").classList.toggle("primary", !on);
+  }, on ? "Boten slås på." : "Boten slås av. Åpne posisjoner passes fortsatt på til de er solgt.");
+});
+$("#d-sellall").addEventListener("click", () => act(() => sendCommand("sell_all"), "Selg alt er sendt."));
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-sell]");
+  if (t) act(() => sendCommand("sell", t.dataset.sell), `Salg av ${t.dataset.sell} er sendt.`);
+});
+$("#d-bt").addEventListener("click", () => act(async () => {
+  if (isLive(S)) await sendCommand("backtest"); else await dispatch("backtest");
+}, "Testen er startet. Resultatet dukker opp her om noen minutter."));
+$("#d-reset").addEventListener("click", () => {
+  const b = $("#d-reset");
+  if (b.dataset.sure !== "1") { b.dataset.sure = "1"; b.textContent = "Trykk igjen for å bekrefte"; setTimeout(() => { b.dataset.sure = ""; b.textContent = "Start testkontoen på nytt"; }, 4000); return; }
+  b.dataset.sure = ""; b.textContent = "Start testkontoen på nytt";
+  act(() => sendCommand("reset"), "Testkontoen startes på nytt.");
+});
+$("#d-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const cfg = {};
+  for (const el of e.target.elements) { if (!el.name) continue; cfg[el.name] = el.type === "checkbox" ? el.checked : (el.type === "number" ? Number(el.value) : el.value); }
+  cfg.tickers = String(cfg.tickers).split(/[,\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean).slice(0, 15);
+  act(() => writeFile("config.json", d => Object.assign({}, S.cfg, d, cfg), "innstillinger"), "Innstillingene er lagret.");
+});
+$("#c-save").addEventListener("click", async () => {
+  const v = $("#c-token").value.trim();
+  if (!v) return;
+  token = v;
+  try { await gh(""); try { localStorage.setItem("dt-token", v); } catch (e) {} showConnect(); toast("Koblet til."); load(); }
+  catch (e) { token = ""; toast(e.message); }
+});
+$("#c-forget").addEventListener("click", () => { token = ""; try { localStorage.removeItem("dt-token"); } catch (e) {} showConnect(); });
+$("#c-start").addEventListener("click", () => act(() => dispatch("bot"), "Boten startes nå."));
+function showConnect() { $("#c-off").hidden = !!token; $("#c-on").hidden = !token; document.body.classList.toggle("ro", !token); }
+showConnect();
+$("#repo").textContent = REPO;
+$("#repo").href = "https://github.com/" + REPO;
+load();
+setInterval(load, 60000);
+
+</script></body></html>
