@@ -126,7 +126,7 @@ function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = fal
 const qs = new URLSearchParams(location.search).get("repo");
 const REPO = qs || (location.hostname.endsWith(".github.io")
   ? location.hostname.split(".")[0] + "/" + location.pathname.split("/").filter(Boolean)[0]
-  : "__REPO__");
+  : "kkas4845-cmd/Daytrader");
 const API = "https://api.github.com/repos/" + REPO;
 let token = "";
 try { token = localStorage.getItem("dt-token") || ""; } catch (e) {}
