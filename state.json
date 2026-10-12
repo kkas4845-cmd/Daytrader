@@ -1,0 +1,78 @@
+{
+ "cash": 10000.0,
+ "pos": {},
+ "trades": [],
+ "log": [],
+ "day": {
+  "date": "2026-10-12",
+  "pnl": 0.0,
+  "n": 0
+ },
+ "done": [],
+ "seen": {
+  "AAPL": "2026-10-12T16:20:00+00:00",
+  "NVDA": "2026-10-12T16:20:00+00:00",
+  "TSLA": "2026-10-12T16:20:00+00:00",
+  "AMD": "2026-10-12T16:20:00+00:00",
+  "MSFT": "2026-10-12T16:20:00+00:00",
+  "META": "2026-10-12T16:20:00+00:00",
+  "AMZN": "2026-10-12T16:20:00+00:00"
+ },
+ "prices": {
+  "AAPL": 339.95,
+  "NVDA": 226.4,
+  "TSLA": 378.89,
+  "AMD": 592.335,
+  "MSFT": 540.48,
+  "META": 745.032,
+  "AMZN": 260.7
+ },
+ "cur": {
+  "AAPL": "USD",
+  "NVDA": "USD",
+  "TSLA": "USD",
+  "AMD": "USD",
+  "MSFT": "USD",
+  "META": "USD",
+  "AMZN": "USD"
+ },
+ "backtest": null,
+ "status": "Følger 7 aksjer. Leter etter oppsett.",
+ "data_msg": "",
+ "last_ok": "2026-10-12T16:25:14+00:00",
+ "equity": 10000.0,
+ "updated": "2026-10-12T16:25:15+00:00",
+ "cfg": {
+  "on": true,
+  "tickers": [
+   "AAPL",
+   "NVDA",
+   "TSLA",
+   "AMD",
+   "MSFT",
+   "META",
+   "AMZN"
+  ],
+  "start_cash": 10000,
+  "risk_pct": 1.0,
+  "rr": 2.0,
+  "max_trades": 3,
+  "daily_loss_pct": 3.0,
+  "max_pos_pct": 100,
+  "fee_nok": 5,
+  "pullback": true,
+  "failure": true,
+  "orb": true,
+  "need_confirm": true,
+  "breakeven": false,
+  "skip_open_min": 15,
+  "stop_new_min": 45,
+  "flat_min": 10,
+  "ntfy": ""
+ },
+ "next_open": null,
+ "stats": {
+  "n": 0
+ },
+ "halted": ""
+}
